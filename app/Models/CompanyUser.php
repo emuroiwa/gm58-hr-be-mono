@@ -2,23 +2,32 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class CompanyUser extends BaseModel
+class CompanyUser extends Model
 {
+    use HasFactory, HasUuid;
+
+    protected $table = 'company_users';
+
     protected $fillable = [
         'company_id',
         'user_id',
         'role',
-        'is_default',
-        'is_active',
+        'permissions',
         'joined_at',
+        'left_at',
+        'is_active',
     ];
 
     protected $casts = [
-        'is_default' => 'boolean',
-        'is_active' => 'boolean',
+        'permissions' => 'array',
         'joined_at' => 'datetime',
+        'left_at' => 'datetime',
+        'is_active' => 'boolean',
     ];
 
     public function company(): BelongsTo
@@ -31,13 +40,8 @@ class CompanyUser extends BaseModel
         return $this->belongsTo(User::class);
     }
 
-    public function isCompanyAdmin(): bool
+    public function hasPermission(string $permission): bool
     {
-        return $this->role === 'company_admin';
-    }
-
-    public function isHR(): bool
-    {
-        return in_array($this->role, ['company_admin', 'hr']);
+        return in_array($permission, $this->permissions ?? []);
     }
 }

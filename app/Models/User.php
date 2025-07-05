@@ -2,68 +2,59 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
+use App\Traits\BelongsToCompany;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 use Laravel\Sanctum\HasApiTokens;
-use App\Traits\HasUuid;
-use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
 class User extends Authenticatable
 {
-    use HasApiTokens, HasFactory, Notifiable, HasUuid, SoftDeletes;
-
-    public $incrementing = false;
-    protected $keyType = 'string';
+    use HasApiTokens, HasFactory, Notifiable, HasUuid, BelongsToCompany;
 
     protected $fillable = [
-        'username',
+        'name',
         'email',
         'password',
+        'company_id',
         'role',
         'is_active',
-        'last_login',
+        'email_verified_at',
+        'last_login_at',
     ];
 
     protected $hidden = [
         'password',
         'remember_token',
-        'deleted_at',
     ];
 
     protected $casts = [
         'email_verified_at' => 'datetime',
-        'last_login' => 'datetime',
+        'last_login_at' => 'datetime',
         'is_active' => 'boolean',
         'password' => 'hashed',
     ];
 
-    public function companies(): HasMany
-    {
-        return $this->hasMany(CompanyUser::class);
-    }
-
-    public function employee()
+    public function employee(): HasOne
     {
         return $this->hasOne(Employee::class);
     }
 
-    public function getCurrentCompanyAttribute()
+    public function isAdmin(): bool
     {
-        return $this->companies()->where('is_default', true)->first()?->company;
+        return $this->role === 'admin';
     }
 
-    public function hasCompanyAccess(string $companyId): bool
+    public function isManager(): bool
     {
-        return $this->companies()
-            ->where('company_id', $companyId)
-            ->where('is_active', true)
-            ->exists();
+        return in_array($this->role, ['admin', 'manager']);
     }
 
-    public function isSuperAdmin(): bool
+    public function isEmployee(): bool
     {
-        return $this->role === 'super_admin';
+        return $this->role === 'employee';
     }
 }

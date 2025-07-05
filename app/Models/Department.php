@@ -2,27 +2,31 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasUuid;
+use App\Traits\BelongsToCompany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Department extends BaseModel
+class Department extends Model
 {
+    use HasFactory, HasUuid, BelongsToCompany;
+
     protected $fillable = [
         'company_id',
         'name',
         'description',
         'manager_id',
+        'budget',
+        'location',
         'is_active',
     ];
 
     protected $casts = [
+        'budget' => 'decimal:2',
         'is_active' => 'boolean',
     ];
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class);
-    }
 
     public function manager(): BelongsTo
     {
@@ -39,13 +43,8 @@ class Department extends BaseModel
         return $this->hasMany(Position::class);
     }
 
-    public function scopeActive($query)
+    public function getActiveEmployeesCount(): int
     {
-        return $query->where('is_active', true);
-    }
-
-    public function getEmployeeCountAttribute(): int
-    {
-        return $this->employees()->where('is_active', true)->count();
+        return $this->employees()->where('status', 'active')->count();
     }
 }

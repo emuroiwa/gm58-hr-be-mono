@@ -2,43 +2,28 @@
 
 namespace App\Models;
 
-class Currency extends BaseModel
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
+
+class Currency extends Model
 {
+    use HasFactory;
+
     protected $fillable = [
         'code',
         'name',
         'symbol',
+        'decimal_places',
         'is_active',
-        'is_base_currency',
     ];
 
     protected $casts = [
+        'decimal_places' => 'integer',
         'is_active' => 'boolean',
-        'is_base_currency' => 'boolean',
     ];
-
-    public function employees()
-    {
-        return $this->hasMany(Employee::class);
-    }
-
-    public function positions()
-    {
-        return $this->hasMany(Position::class);
-    }
 
     public function companies()
     {
-        return $this->hasMany(Company::class, 'base_currency_id');
-    }
-
-    public function scopeActive($query)
-    {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeBase($query)
-    {
-        return $query->where('is_base_currency', true);
+        return $this->hasMany(Company::class, 'currency', 'code');
     }
 }

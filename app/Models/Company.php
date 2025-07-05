@@ -2,41 +2,48 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
-use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Company extends BaseModel
+class Company extends Model
 {
+    use HasFactory, HasUuid, SoftDeletes;
+
     protected $fillable = [
-        'name', 'code', 'email', 'phone', 'address', 'city', 'country',
-        'website', 'tax_number', 'registration_no', 'industry', 'size',
-        'base_currency_id', 'billing_plan', 'billing_cycle', 'subscription_end',
-        'max_employees', 'logo_url', 'payroll_cycle', 'work_week_days',
-        'work_day_hours', 'overtime_rate', 'weekend_rate', 'is_active',
-        'is_verified', 'verified_at', 'created_by'
+        'name',
+        'email',
+        'phone',
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
+        'tax_id',
+        'logo',
+        'website',
+        'industry',
+        'employee_count',
+        'founded_year',
+        'currency',
+        'timezone',
+        'payroll_cycle',
+        'is_active',
+        'settings',
     ];
 
     protected $casts = [
-        'subscription_end' => 'datetime',
-        'verified_at' => 'datetime',
-        'work_day_hours' => 'decimal:2',
-        'overtime_rate' => 'decimal:2',
-        'weekend_rate' => 'decimal:2',
+        'founded_year' => 'integer',
+        'employee_count' => 'integer',
         'is_active' => 'boolean',
-        'is_verified' => 'boolean',
-        'max_employees' => 'integer',
-        'work_week_days' => 'integer',
+        'settings' => 'array',
     ];
-
-    public function baseCurrency(): BelongsTo
-    {
-        return $this->belongsTo(Currency::class, 'base_currency_id');
-    }
 
     public function users(): HasMany
     {
-        return $this->hasMany(CompanyUser::class);
+        return $this->hasMany(User::class);
     }
 
     public function employees(): HasMany
@@ -59,23 +66,13 @@ class Company extends BaseModel
         return $this->hasMany(PayrollPeriod::class);
     }
 
-    public function settings(): HasOne
+    public function benefits(): HasMany
     {
-        return $this->hasOne(CompanySettings::class);
+        return $this->hasMany(Benefit::class);
     }
 
-    public function isActive(): bool
+    public function leaveTypes(): HasMany
     {
-        return $this->is_active && (!$this->subscription_end || $this->subscription_end->isFuture());
-    }
-
-    public function canAddEmployees(): bool
-    {
-        return $this->employees()->count() < $this->max_employees;
-    }
-
-    public function getActiveEmployeesCount(): int
-    {
-        return $this->employees()->where('is_active', true)->count();
+        return $this->hasMany(LeaveType::class);
     }
 }

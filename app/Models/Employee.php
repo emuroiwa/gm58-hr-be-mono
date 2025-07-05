@@ -2,46 +2,60 @@
 
 namespace App\Models;
 
+use App\Traits\HasUuid;
+use App\Traits\BelongsToCompany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\HasOne;
+use Illuminate\Database\Eloquent\SoftDeletes;
 
-class Employee extends BaseModel
+class Employee extends Model
 {
+    use HasFactory, HasUuid, BelongsToCompany, SoftDeletes;
+
     protected $fillable = [
-        'company_id', 'user_id', 'employee_number', 'first_name', 'last_name',
-        'middle_name', 'national_id', 'tax_number', 'passport_number', 'email',
-        'phone', 'alternative_phone', 'address', 'city', 'country',
-        'position_id', 'department_id', 'manager_id', 'basic_salary',
-        'currency_id', 'payment_method', 'payment_schedule', 'bank_name',
-        'bank_account', 'bank_branch', 'bank_code', 'swift_code',
-        'hire_date', 'probation_end_date', 'contract_end_date',
-        'termination_date', 'employment_type', 'employment_status',
-        'is_active', 'emergency_contact_name', 'emergency_contact_phone',
-        'medical_aid_number', 'medical_aid_provider'
+        'company_id',
+        'user_id',
+        'employee_id',
+        'first_name',
+        'last_name',
+        'email',
+        'phone',
+        'date_of_birth',
+        'gender',
+        'address',
+        'city',
+        'state',
+        'country',
+        'postal_code',
+        'emergency_contact_name',
+        'emergency_contact_phone',
+        'hire_date',
+        'termination_date',
+        'employment_type',
+        'status',
+        'department_id',
+        'position_id',
+        'manager_id',
+        'avatar',
+        'national_id',
+        'passport_number',
+        'bank_account_number',
+        'bank_name',
+        'tax_number',
     ];
 
     protected $casts = [
-        'basic_salary' => 'decimal:2',
+        'date_of_birth' => 'date',
         'hire_date' => 'date',
-        'probation_end_date' => 'date',
-        'contract_end_date' => 'date',
         'termination_date' => 'date',
-        'is_active' => 'boolean',
     ];
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class);
-    }
 
     public function user(): BelongsTo
     {
         return $this->belongsTo(User::class);
-    }
-
-    public function position(): BelongsTo
-    {
-        return $this->belongsTo(Position::class);
     }
 
     public function department(): BelongsTo
@@ -49,9 +63,9 @@ class Employee extends BaseModel
         return $this->belongsTo(Department::class);
     }
 
-    public function currency(): BelongsTo
+    public function position(): BelongsTo
     {
-        return $this->belongsTo(Currency::class);
+        return $this->belongsTo(Position::class);
     }
 
     public function manager(): BelongsTo
@@ -64,33 +78,43 @@ class Employee extends BaseModel
         return $this->hasMany(Employee::class, 'manager_id');
     }
 
-    public function payslips(): HasMany
+    public function salary(): HasOne
     {
-        return $this->hasMany(Payslip::class);
+        return $this->hasOne(Salary::class);
+    }
+
+    public function payrollEntries(): HasMany
+    {
+        return $this->hasMany(PayrollEntry::class);
+    }
+
+    public function attendances(): HasMany
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
+    public function leaves(): HasMany
+    {
+        return $this->hasMany(Leave::class);
+    }
+
+    public function benefits(): HasMany
+    {
+        return $this->hasMany(EmployeeBenefit::class);
     }
 
     public function getFullNameAttribute(): string
     {
-        return trim($this->first_name . ' ' . $this->middle_name . ' ' . $this->last_name);
+        return $this->first_name . ' ' . $this->last_name;
     }
 
-    public function scopeActive($query)
+    public function isActive(): bool
     {
-        return $query->where('is_active', true);
-    }
-
-    public function scopeByCompany($query, string $companyId)
-    {
-        return $query->where('company_id', $companyId);
+        return $this->status === 'active';
     }
 
     public function isManager(): bool
     {
         return $this->subordinates()->exists();
-    }
-
-    public function isOnProbation(): bool
-    {
-        return $this->probation_end_date && $this->probation_end_date->isFuture();
     }
 }

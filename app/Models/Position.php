@@ -2,41 +2,41 @@
 
 namespace App\Models;
 
-use Illuminate\Database\Eloquent\Relations\BelongsTo;
+use App\Traits\HasUuid;
+use App\Traits\BelongsToCompany;
+use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\Relations\BelongsTo;
 
-class Position extends BaseModel
+class Position extends Model
 {
+    use HasFactory, HasUuid, BelongsToCompany;
+
     protected $fillable = [
         'company_id',
-        'title',
         'department_id',
+        'title',
         'description',
+        'responsibilities',
+        'requirements',
         'min_salary',
         'max_salary',
-        'currency_id',
+        'level',
         'is_active',
     ];
 
     protected $casts = [
         'min_salary' => 'decimal:2',
         'max_salary' => 'decimal:2',
+        'responsibilities' => 'array',
+        'requirements' => 'array',
         'is_active' => 'boolean',
     ];
-
-    public function company(): BelongsTo
-    {
-        return $this->belongsTo(Company::class);
-    }
 
     public function department(): BelongsTo
     {
         return $this->belongsTo(Department::class);
-    }
-
-    public function currency(): BelongsTo
-    {
-        return $this->belongsTo(Currency::class);
     }
 
     public function employees(): HasMany
@@ -44,13 +44,8 @@ class Position extends BaseModel
         return $this->hasMany(Employee::class);
     }
 
-    public function scopeActive($query)
+    public function getActiveEmployeesCount(): int
     {
-        return $query->where('is_active', true);
-    }
-
-    public function isInSalaryRange(float $salary): bool
-    {
-        return $salary >= $this->min_salary && $salary <= $this->max_salary;
+        return $this->employees()->where('status', 'active')->count();
     }
 }
