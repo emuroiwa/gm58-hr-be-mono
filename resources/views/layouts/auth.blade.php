@@ -22,9 +22,9 @@
         <div>
             <a href="{{ url('/') }}" class="flex items-center">
                 <div class="w-12 h-12 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold text-xl">
-                    HR
+                    {{ config('app.name') }}
                 </div>
-                <span class="ml-3 text-2xl font-semibold text-gray-900">{{ config('app.name') }}</span>
+                <span class="ml-3 text-2xl font-semibold text-gray-900">HR</span>
             </a>
         </div>
 

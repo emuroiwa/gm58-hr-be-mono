@@ -36,10 +36,11 @@
                         <!-- Logo -->
                         <div class="flex-shrink-0">
                             <a href="{{ url('/') }}" class="flex items-center">
+                                <span class="ml-2 text-xl font-semibold text-gray-900">{{ config('app.name') }}</span>
                                 <div class="w-8 h-8 bg-blue-600 rounded-lg flex items-center justify-center text-white font-bold">
                                     HR
                                 </div>
-                                <span class="ml-2 text-xl font-semibold text-gray-900">{{ config('app.name') }}</span>
+                                
                             </a>
                         </div>
 

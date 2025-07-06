@@ -13,7 +13,7 @@ return new class extends Migration
             $table->uuid('company_id');
             $table->uuid('employee_id');
             $table->uuid('payroll_period_id');
-            $table->uuid('currency_id');
+            $table->string('currency_id');
             $table->decimal('exchange_rate', 15, 6)->default(1);
             
             // Earnings (in employee's currency)
@@ -60,7 +60,7 @@ return new class extends Migration
             $table->foreign('company_id')->references('id')->on('companies');
             $table->foreign('employee_id')->references('id')->on('employees');
             $table->foreign('payroll_period_id')->references('id')->on('payroll_periods');
-            $table->foreign('currency_id')->references('id')->on('currencies');
+            // $table->foreign('currency_id')->references('id')->on('currencies');
             
             $table->unique(['company_id', 'employee_id', 'payroll_period_id']);
             $table->index(['company_id', 'payroll_period_id']);

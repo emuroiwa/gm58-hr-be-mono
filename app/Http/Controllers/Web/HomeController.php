@@ -135,7 +135,7 @@ class HomeController extends Controller
         $plans = [
             [
                 'name' => 'Starter',
-                'price' => 5,
+                'price' => 1.35,
                 'period' => 'per employee/month',
                 'description' => 'Perfect for small businesses getting started',
                 'features' => [
@@ -149,7 +149,7 @@ class HomeController extends Controller
             ],
             [
                 'name' => 'Professional',
-                'price' => 8,
+                'price' => 1.25,
                 'period' => 'per employee/month',
                 'description' => 'Ideal for growing companies',
                 'features' => [
@@ -164,7 +164,7 @@ class HomeController extends Controller
             ],
             [
                 'name' => 'Enterprise',
-                'price' => 12,
+                'price' => 1,
                 'period' => 'per employee/month',
                 'description' => 'For large organizations with complex needs',
                 'features' => [

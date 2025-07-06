@@ -17,8 +17,8 @@ return new class extends Migration
             $table->string('source', 50)->default('api'); // api, manual, etc.
             $table->timestamps();
             
-            $table->foreign('from_currency_id')->references('id')->on('currencies');
-            $table->foreign('to_currency_id')->references('id')->on('currencies');
+            // $table->foreign('from_currency_id')->references('id')->on('currencies');
+            // $table->foreign('to_currency_id')->references('id')->on('currencies');
             
             $table->index(['from_currency_id', 'to_currency_id']);
             $table->index(['effective_date']);

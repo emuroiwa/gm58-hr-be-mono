@@ -4,6 +4,11 @@ use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\Web\HomeController;
 use App\Http\Controllers\Web\AuthController;
 use App\Http\Controllers\Web\DashboardController;
+use App\Http\Controllers\Web\AdminController;
+use App\Http\Controllers\Web\DocsController;
+use App\Http\Controllers\Web\WebhookController;
+use App\Http\Controllers\Web\DownloadController;
+use App\Http\Controllers\Web\LegalController;
 
 /*
 |--------------------------------------------------------------------------

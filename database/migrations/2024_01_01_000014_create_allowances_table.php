@@ -15,7 +15,7 @@ return new class extends Migration
             $table->string('name', 100);
             $table->text('description')->nullable();
             $table->decimal('amount', 15, 2)->default(0);
-            $table->uuid('currency_id');
+            $table->string('currency_id');
             $table->boolean('is_fixed')->default(true);
             $table->decimal('percentage', 5, 2)->nullable();
             $table->boolean('is_taxable')->default(true);
@@ -28,7 +28,7 @@ return new class extends Migration
             
             $table->foreign('company_id')->references('id')->on('companies');
             $table->foreign('employee_id')->references('id')->on('employees');
-            $table->foreign('currency_id')->references('id')->on('currencies');
+            // $table->foreign('currency_id')->references('id')->on('currencies');
             
             $table->index(['company_id', 'employee_id']);
             $table->index(['company_id', 'is_active', 'is_recurring']);
