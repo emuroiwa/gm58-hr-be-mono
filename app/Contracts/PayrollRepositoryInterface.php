@@ -1,22 +1,24 @@
 <?php
+// app/Contracts/PayrollRepositoryInterface.php
 
 namespace App\Contracts;
 
 use App\Models\PayrollPeriod;
-use App\Models\PayrollEntry;
+use App\Models\Payroll;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 
 interface PayrollRepositoryInterface
 {
-    public function getAllPeriods(int $companyId, array $filters = []): LengthAwarePaginator;
+    // Period methods
     public function createPeriod(array $data): PayrollPeriod;
-    public function findPeriod(int $id, int $companyId): ?PayrollPeriod;
-    public function updatePeriod(int $id, array $data, int $companyId): bool;
-    public function deletePeriod(int $id, int $companyId): bool;
-    public function getActivePayrollPeriod(int $companyId): ?PayrollPeriod;
-    public function processPayroll(int $periodId, int $companyId): Collection;
-    public function getPayrollEntries(int $periodId, int $companyId): Collection;
-    public function createPayrollEntry(array $data): PayrollEntry;
-    public function calculateTotalPayroll(int $periodId, int $companyId): float;
+    public function findPeriod(string $id): ?PayrollPeriod;
+    public function findPeriodByIdAndCompany(string $periodId, string $companyId): ?PayrollPeriod;
+    public function getPeriodsWithFilters(string $companyId, array $filters = []): LengthAwarePaginator;
+    
+    // Payroll methods
+    public function create(array $data): Payroll;
+    public function getByPeriod(string $periodId): Collection;
+    public function getPayrollDetailsByPeriod(string $periodId): array;
+    public function getPayrollSummaryByCompany(string $companyId): array;
 }

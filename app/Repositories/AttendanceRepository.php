@@ -1,89 +1,110 @@
 <?php
+// app/Repositories/AttendanceRepository.php
 
 namespace App\Repositories;
 
-use App\Contracts\AttendanceRepositoryInterface;
 use App\Models\Attendance;
-use App\Models\TimeEntry;
+use App\Contracts\AttendanceRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Carbon\Carbon;
 
 class AttendanceRepository implements AttendanceRepositoryInterface
 {
-    public function getAttendanceByEmployee(int $employeeId, Carbon $startDate, Carbon $endDate): Collection
-    {
-        return Attendance::where('employee_id', $employeeId)
-                        ->whereBetween('date', [$startDate, $endDate])
-                        ->orderBy('date', 'desc')
-                        ->get();
-    }
-
-    public function recordAttendance(array $data): Attendance
+    public function create(array $data): Attendance
     {
         return Attendance::create($data);
     }
 
-    public function updateAttendance(int $id, array $data): bool
+    public function find(string $id): ?Attendance
     {
-        return Attendance::where('id', $id)->update($data);
+        return Attendance::find($id);
     }
 
-    public function deleteAttendance(int $id): bool
+    public function update(string $id, array $data): Attendance
     {
-        return Attendance::where('id', $id)->delete();
+        $attendance = Attendance::findOrFail($id);
+        $attendance->update($data);
+        return $attendance->fresh();
     }
 
-    public function getAttendanceByCompany(int $companyId, array $filters = []): LengthAwarePaginator
+    public function getTodayAttendance(string $employeeId): ?Attendance
     {
-        $query = Attendance::whereHas('employee', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        })->with('employee');
+        return Attendance::where('employee_id', $employeeId)
+            ->whereDate('date', Carbon::today())
+            ->first();
+    }
 
-        if (isset($filters['date_from'])) {
-            $query->whereDate('date', '>=', $filters['date_from']);
+    public function getByEmployee(string $employeeId, array $filters = []): LengthAwarePaginator
+    {
+        $query = Attendance::where('employee_id', $employeeId);
+
+        if (isset($filters['start_date'])) {
+            $query->whereDate('date', '>=', $filters['start_date']);
         }
 
-        if (isset($filters['date_to'])) {
-            $query->whereDate('date', '<=', $filters['date_to']);
+        if (isset($filters['end_date'])) {
+            $query->whereDate('date', '<=', $filters['end_date']);
         }
 
-        if (isset($filters['employee_id'])) {
-            $query->where('employee_id', $filters['employee_id']);
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
         }
 
         return $query->orderBy('date', 'desc')
                     ->paginate($filters['per_page'] ?? 15);
     }
 
-    public function createTimeEntry(array $data): TimeEntry
+    public function getByCompany(string $companyId, array $filters = []): LengthAwarePaginator
     {
-        return TimeEntry::create($data);
+        $query = Attendance::whereHas('employee', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })->with('employee');
+
+        if (isset($filters['date'])) {
+            $query->whereDate('date', $filters['date']);
+        }
+
+        if (isset($filters['start_date'])) {
+            $query->whereDate('date', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $query->whereDate('date', '<=', $filters['end_date']);
+        }
+
+        if (isset($filters['department_id'])) {
+            $query->whereHas('employee', function ($q) use ($filters) {
+                $q->where('department_id', $filters['department_id']);
+            });
+        }
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        return $query->orderBy('date', 'desc')
+                    ->orderBy('check_in', 'desc')
+                    ->paginate($filters['per_page'] ?? 15);
     }
 
-    public function getTimeEntries(int $employeeId, Carbon $date): Collection
-    {
-        return TimeEntry::where('employee_id', $employeeId)
-                       ->whereDate('date', $date)
-                       ->orderBy('time', 'asc')
-                       ->get();
-    }
-
-    public function calculateHoursWorked(int $employeeId, Carbon $startDate, Carbon $endDate): float
-    {
-        return Attendance::where('employee_id', $employeeId)
-                        ->whereBetween('date', [$startDate, $endDate])
-                        ->sum('hours_worked');
-    }
-
-    public function getAttendanceReport(int $companyId, Carbon $startDate, Carbon $endDate): Collection
+    public function countPresentToday(string $companyId): int
     {
         return Attendance::whereHas('employee', function ($q) use ($companyId) {
-                         $q->where('company_id', $companyId);
-                     })
-                     ->whereBetween('date', [$startDate, $endDate])
-                     ->with(['employee.department', 'employee.position'])
-                     ->get()
-                     ->groupBy('employee_id');
+            $q->where('company_id', $companyId);
+        })
+        ->whereDate('date', Carbon::today())
+        ->where('status', 'present')
+        ->count();
+    }
+
+    public function getReportData(string $companyId, string $startDate, string $endDate): Collection
+    {
+        return Attendance::whereHas('employee', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })
+        ->whereBetween('date', [$startDate, $endDate])
+        ->with('employee')
+        ->get();
     }
 }

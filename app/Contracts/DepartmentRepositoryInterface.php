@@ -1,4 +1,5 @@
 <?php
+// app/Contracts/DepartmentRepositoryInterface.php
 
 namespace App\Contracts;
 
@@ -8,6 +9,17 @@ use Illuminate\Database\Eloquent\Collection;
 
 interface DepartmentRepositoryInterface
 {
+    // Basic CRUD
+    public function create(array $data): Department;
+    public function find(string $id): ?Department;
+    public function update(string $id, array $data): Department;
+    public function delete(string $id): bool;
+    
+    // Company-specific methods
+    public function getByCompany(string $companyId): Collection;
+    public function findByIdAndCompany(string $departmentId, string $companyId): ?Department;
+    
+    // Legacy methods for compatibility
     public function getAllDepartments(int $companyId, array $filters = []): LengthAwarePaginator;
     public function createDepartment(array $data): Department;
     public function findDepartment(int $id, int $companyId): ?Department;

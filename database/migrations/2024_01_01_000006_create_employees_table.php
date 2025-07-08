@@ -12,7 +12,7 @@ return new class extends Migration
             $table->uuid('id')->primary();
             $table->foreignUuid('company_id')->constrained()->cascadeOnDelete();
             $table->foreignUuid('user_id')->nullable()->constrained()->nullOnDelete();
-            $table->string('employee_id')->unique();
+            $table->string('employee_id')->nullable()->unique();
             
             // Personal Information
             $table->string('first_name');

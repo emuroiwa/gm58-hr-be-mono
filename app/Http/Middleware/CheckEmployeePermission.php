@@ -20,6 +20,11 @@ class CheckEmployeePermission
             return response()->json(['message' => 'Unauthenticated'], 401);
         }
 
+        // Ensure user has a role
+        if (!$user->role) {
+            return response()->json(['message' => 'User role not assigned'], 403);
+        }
+
         // Super admin has all permissions
         if ($user->role === 'super_admin') {
             return $next($request);

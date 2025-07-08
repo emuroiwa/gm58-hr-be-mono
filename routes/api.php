@@ -17,6 +17,10 @@ use App\Http\Controllers\Api\V1\BenefitController;
 use App\Http\Controllers\Api\V1\ReportController;
 use App\Http\Controllers\Api\V1\DashboardController;
 use App\Http\Controllers\Api\V1\NotificationController;
+use App\Http\Controllers\Web\FileController;
+use App\Http\Controllers\Api\V1\SettingsController;
+use App\Http\Controllers\Api\V1\UserController;
+use App\Http\Controllers\Api\V1\SystemController;
 
 /*
 |--------------------------------------------------------------------------
@@ -42,7 +46,7 @@ Route::prefix('v1')->group(function () {
     });
 
     // Protected Routes - Require Authentication
-    Route::middleware(['auth:sanctum', 'company.access', 'company.status'])->group(function () {
+    Route::middleware(['auth:sanctum'])->group(function () {
         
         // Authentication Management
         Route::prefix('auth')->group(function () {

@@ -1,137 +1,124 @@
 <?php
+// app/Repositories/LeaveRepository.php
 
 namespace App\Repositories;
 
-use App\Contracts\LeaveRepositoryInterface;
 use App\Models\Leave;
-use App\Models\LeaveType;
+use App\Contracts\LeaveRepositoryInterface;
 use Illuminate\Pagination\LengthAwarePaginator;
 use Illuminate\Database\Eloquent\Collection;
 use Carbon\Carbon;
 
 class LeaveRepository implements LeaveRepositoryInterface
 {
-    public function getAllLeaves(int $companyId, array $filters = []): LengthAwarePaginator
-    {
-        $query = Leave::whereHas('employee', function ($q) use ($companyId) {
-            $q->where('company_id', $companyId);
-        });
-        
-        if (isset($filters['status'])) {
-            $query->where('status', $filters['status']);
-        }
-        
-        if (isset($filters['employee_id'])) {
-            $query->where('employee_id', $filters['employee_id']);
-        }
-        
-        if (isset($filters['leave_type_id'])) {
-            $query->where('leave_type_id', $filters['leave_type_id']);
-        }
-        
-        return $query->with(['employee', 'leaveType', 'approvedBy'])
-                    ->orderBy('start_date', 'desc')
-                    ->paginate($filters['per_page'] ?? 15);
-    }
-
-    public function createLeave(array $data): Leave
+    public function create(array $data): Leave
     {
         return Leave::create($data);
     }
 
-    public function findLeave(int $id, int $companyId): ?Leave
+    public function find(string $id): ?Leave
+    {
+        return Leave::with(['employee', 'leaveType', 'approvedBy'])->find($id);
+    }
+
+    public function update(string $id, array $data): Leave
+    {
+        $leave = Leave::findOrFail($id);
+        $leave->update($data);
+        return $leave->fresh(['employee', 'leaveType', 'approvedBy']);
+    }
+
+    public function getByEmployee(string $employeeId, array $filters = []): LengthAwarePaginator
+    {
+        $query = Leave::where('employee_id', $employeeId)
+            ->with(['leaveType', 'approvedBy']);
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['leave_type_id'])) {
+            $query->where('leave_type_id', $filters['leave_type_id']);
+        }
+
+        if (isset($filters['year'])) {
+            $query->whereYear('start_date', $filters['year']);
+        }
+
+        return $query->orderBy('created_at', 'desc')
+                    ->paginate($filters['per_page'] ?? 15);
+    }
+
+    public function getByCompany(string $companyId, array $filters = []): LengthAwarePaginator
+    {
+        $query = Leave::whereHas('employee', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })->with(['employee', 'leaveType', 'approvedBy']);
+
+        if (isset($filters['status'])) {
+            $query->where('status', $filters['status']);
+        }
+
+        if (isset($filters['department_id'])) {
+            $query->whereHas('employee', function ($q) use ($filters) {
+                $q->where('department_id', $filters['department_id']);
+            });
+        }
+
+        if (isset($filters['start_date'])) {
+            $query->whereDate('start_date', '>=', $filters['start_date']);
+        }
+
+        if (isset($filters['end_date'])) {
+            $query->whereDate('end_date', '<=', $filters['end_date']);
+        }
+
+        return $query->orderBy('created_at', 'desc')
+                    ->paginate($filters['per_page'] ?? 15);
+    }
+
+    public function countPendingLeaves(string $companyId): int
     {
         return Leave::whereHas('employee', function ($q) use ($companyId) {
-                   $q->where('company_id', $companyId);
-               })
-               ->where('id', $id)
-               ->with(['employee', 'leaveType', 'approvedBy'])
-               ->first();
+            $q->where('company_id', $companyId);
+        })
+        ->where('status', 'pending')
+        ->count();
     }
 
-    public function updateLeave(int $id, array $data, int $companyId): bool
+    public function countOnLeaveToday(string $companyId): int
     {
-        return Leave::whereHas('employee', function ($q) use ($companyId) {
-                   $q->where('company_id', $companyId);
-               })
-               ->where('id', $id)
-               ->update($data);
-    }
-
-    public function deleteLeave(int $id, int $companyId): bool
-    {
-        return Leave::whereHas('employee', function ($q) use ($companyId) {
-                   $q->where('company_id', $companyId);
-               })
-               ->where('id', $id)
-               ->delete();
-    }
-
-    public function getEmployeeLeaves(int $employeeId, int $companyId): Collection
-    {
-        return Leave::where('employee_id', $employeeId)
-                   ->whereHas('employee', function ($q) use ($companyId) {
-                       $q->where('company_id', $companyId);
-                   })
-                   ->with(['leaveType', 'approvedBy'])
-                   ->orderBy('start_date', 'desc')
-                   ->get();
-    }
-
-    public function getPendingLeaves(int $companyId): Collection
-    {
-        return Leave::whereHas('employee', function ($q) use ($companyId) {
-                   $q->where('company_id', $companyId);
-               })
-               ->where('status', 'pending')
-               ->with(['employee', 'leaveType'])
-               ->orderBy('created_at', 'asc')
-               ->get();
-    }
-
-    public function approveLeave(int $id, int $companyId): bool
-    {
-        return $this->updateLeave($id, [
-            'status' => 'approved',
-            'approved_at' => now(),
-        ], $companyId);
-    }
-
-    public function rejectLeave(int $id, int $companyId, string $reason = ''): bool
-    {
-        return $this->updateLeave($id, [
-            'status' => 'rejected',
-            'rejection_reason' => $reason,
-            'approved_at' => now(),
-        ], $companyId);
-    }
-
-    public function getLeaveBalance(int $employeeId, int $leaveTypeId): float
-    {
-        $currentYear = Carbon::now()->year;
+        $today = Carbon::today();
         
-        $usedLeaves = Leave::where('employee_id', $employeeId)
-                          ->where('leave_type_id', $leaveTypeId)
-                          ->where('status', 'approved')
-                          ->whereYear('start_date', $currentYear)
-                          ->sum('days');
-        
-        $leaveType = LeaveType::find($leaveTypeId);
-        $allocatedDays = $leaveType ? $leaveType->days_per_year : 0;
-        
-        return max(0, $allocatedDays - $usedLeaves);
+        return Leave::whereHas('employee', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        })
+        ->where('status', 'approved')
+        ->whereDate('start_date', '<=', $today)
+        ->whereDate('end_date', '>=', $today)
+        ->count();
     }
 
-    public function getLeaveTypes(int $companyId): Collection
+    public function getLeaveReport(string $companyId, array $filters = []): array
     {
-        return LeaveType::where('company_id', $companyId)
-                       ->where('is_active', true)
-                       ->orderBy('name')
-                       ->get();
-    }
+        $query = Leave::whereHas('employee', function ($q) use ($companyId) {
+            $q->where('company_id', $companyId);
+        });
 
-    public function createLeaveType(array $data): LeaveType
-    {
-        return LeaveType::create($data);
+        if (isset($filters['start_date']) && isset($filters['end_date'])) {
+            $query->whereBetween('start_date', [$filters['start_date'], $filters['end_date']]);
+        }
+
+        $leaves = $query->with(['employee', 'leaveType'])->get();
+
+        return [
+            'total_leaves' => $leaves->count(),
+            'approved' => $leaves->where('status', 'approved')->count(),
+            'pending' => $leaves->where('status', 'pending')->count(),
+            'rejected' => $leaves->where('status', 'rejected')->count(),
+            'by_type' => $leaves->groupBy('leave_type_id')->map->count(),
+            'by_department' => $leaves->groupBy('employee.department_id')->map->count(),
+            'total_days' => $leaves->sum('days'),
+        ];
     }
 }

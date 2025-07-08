@@ -1,4 +1,5 @@
 <?php
+// app/Providers/AppServiceProvider.php
 
 namespace App\Providers;
 
@@ -15,6 +16,8 @@ use App\Contracts\CompanyUserRepositoryInterface;
 use App\Contracts\DocumentRepositoryInterface;
 use App\Contracts\LeaveRepositoryInterface;
 use App\Contracts\NotificationRepositoryInterface;
+use App\Contracts\CompanyRepositoryInterface;
+use App\Contracts\EmployeeRepositoryInterface;
 
 // Repository Implementations
 use App\Repositories\PayrollRepository;
@@ -27,6 +30,8 @@ use App\Repositories\CompanyUserRepository;
 use App\Repositories\DocumentRepository;
 use App\Repositories\LeaveRepository;
 use App\Repositories\NotificationRepository;
+use App\Repositories\CompanyRepository;
+use App\Repositories\EmployeeRepository;
 
 class AppServiceProvider extends ServiceProvider
 {
@@ -52,6 +57,24 @@ class AppServiceProvider extends ServiceProvider
      */
     private function registerRepositories(): void
     {
+        // Company Repository
+        $this->app->bind(
+            CompanyRepositoryInterface::class,
+            CompanyRepository::class
+        );
+
+        // Employee Repository
+        $this->app->bind(
+            EmployeeRepositoryInterface::class,
+            EmployeeRepository::class
+        );
+
+        // User Repository
+        $this->app->bind(
+            UserRepositoryInterface::class,
+            UserRepository::class
+        );
+
         // Payroll Repository
         $this->app->bind(
             PayrollRepositoryInterface::class,
@@ -82,12 +105,6 @@ class AppServiceProvider extends ServiceProvider
             PositionRepository::class
         );
 
-        // User Repository
-        $this->app->bind(
-            UserRepositoryInterface::class,
-            UserRepository::class
-        );
-
         // Company User Repository
         $this->app->bind(
             CompanyUserRepositoryInterface::class,
@@ -111,18 +128,5 @@ class AppServiceProvider extends ServiceProvider
             NotificationRepositoryInterface::class,
             NotificationRepository::class
         );
-    }
-
-    /**
-     * Register singleton repository bindings (optional)
-     * Use this method if you want repositories as singletons
-     */
-    private function registerSingletonRepositories(): void
-    {
-        // Example: If you want PayrollRepository as singleton
-        // $this->app->singleton(
-        //     PayrollRepositoryInterface::class,
-        //     PayrollRepository::class
-        // );
     }
 }

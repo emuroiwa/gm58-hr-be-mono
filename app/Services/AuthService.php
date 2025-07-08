@@ -19,7 +19,7 @@ class AuthService
 
     public function login(array $credentials)
     {
-        $user = $this->userRepository->findByEmail($credentials['email']);
+        $user = $this->userRepository->findUserByEmail($credentials['email']);
 
         if (!$user || !Hash::check($credentials['password'], $user->password)) {
             throw new AuthenticationException('Invalid credentials');
@@ -59,8 +59,9 @@ class AuthService
             ]);
 
             // Create admin user
-            $user = $this->userRepository->create([
+            $user = $this->userRepository->createUser([
                 'company_id' => $company->id,
+                'name' => $data['first_name'],
                 'email' => $data['email'],
                 'password' => Hash::make($data['password']),
                 'role' => 'admin',
@@ -72,7 +73,7 @@ class AuthService
             $employee = $this->employeeRepository->create([
                 'company_id' => $company->id,
                 'user_id' => $user->id,
-                'employee_id' => 'EMP001',
+                'employee_id' => $data['employee_id'] ?? null,
                 'first_name' => $data['first_name'],
                 'last_name' => $data['last_name'],
                 'email' => $data['email'],
@@ -82,7 +83,7 @@ class AuthService
                 'job_title' => 'Administrator',
             ]);
 
-            $this->userRepository->update($user->id, ['employee_id' => $employee->id]);
+            $this->userRepository->updateUser($user->id, ['employee_id' => $employee->id]);
 
             return [
                 'company' => $company,

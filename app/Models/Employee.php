@@ -45,6 +45,7 @@ class Employee extends Model
         'bank_account_number',
         'bank_name',
         'tax_number',
+        'job_title',
     ];
 
     protected $casts = [
